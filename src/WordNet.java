@@ -3,25 +3,30 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+
 import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.Digraph;
 import edu.princeton.cs.algs4.StdIn;
+import edu.princeton.cs.algs4.StdOut;
 import edu.princeton.cs.algs4.DirectedCycle;
 
 public class WordNet {
     private final SAP sap;
     private final Map<Integer, String> idToSynset;
-    private final Map<Integer, Set<Integer>> nounToIds;
+    private final Map<String, Set<Integer>> nounToIds;
     
    // constructor takes the name of the two input files
     public WordNet(String synsets, String hypernyms) {
         if (synsets == null) throw new NullPointerException("no synsets");
         if (hypernyms == null) throw new NullPointerException("no hypernyms");
+        idToSynset = new HashMap<Integer, String>();
+        nounToIds = new HashMap<String, Set<Integer>>();
+        
         initSynsets(synsets);
         Digraph graph = initHypernyms(hypernyms);
         DirectedCycle cycle = new DirectedCycle(graph);
         if (cycle.hasCycle() || !rootedDAG(graph)) {
-            throw new IIllegalArgumentException("not a rooted DAG");
+            throw new IllegalArgumentException("not a rooted DAG");
         }
         sap = new SAP(graph);    
     }
@@ -29,7 +34,7 @@ public class WordNet {
     private boolean rootedDAG(Digraph g) {
         int roots = 0;
         for (int i = 0; i<g.V(); i++) {
-            if (!g.adj(i).iterator.hasNext()) {
+            if (!g.adj(i).iterator().hasNext()) {
                 roots += 1;
                 if (roots > 1) return false;
             }
@@ -38,11 +43,12 @@ public class WordNet {
     }
     
     private void initSynsets(String synset) {
-        In file = new In(sysnset);
-        while (file.hasNextline()) {
+        In file = new In(synset);
+        while (file.hasNextLine()) {
             String[] line = file.readLine().split(",");
             Integer id = Integer.valueOf(line[0]);
             String words = line[1];
+            idToSynset.put(id, words);
             String[] nouns = words.split(" ");
       
             for (String noun:nouns) {
@@ -63,9 +69,10 @@ public class WordNet {
         In file = new In(hypernyms);
         while (file.hasNextLine()) {
             String[] line = file.readLine().split(",");
-            int start = Integer.valueOf(line[0]);
+            Integer start = Integer.valueOf(line[0]);
             for (int i = 1; i< line.length; i++) {
-                graph.addEdge(start, Integer.valueOf(line[i]));
+                Integer id = Integer.valueOf(line[i]);
+                graph.addEdge(start, id);
             }
         }
         return graph;   
@@ -110,8 +117,8 @@ public class WordNet {
 
    // do unit testing of this class
     public static void main(String[] args) {
-        WordNet wordNet = new WordNet(args[0]. args[1]);
-        while (!Stdin.isEmpty()) {
+        WordNet wordNet = new WordNet(args[0], args[1]);
+        while (!StdIn.isEmpty()) {
             String v = StdIn.readString();
             String w = StdIn.readString();
             if (!wordNet.isNoun(v)) {
